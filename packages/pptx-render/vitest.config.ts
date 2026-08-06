@@ -9,12 +9,12 @@ export default defineConfig({
   resolve: {
     alias: {
       // Subpath before the bare name: string aliases are prefix replacements
-      '@genoffice/pptx-engine/table-grid': resolve(here, '../pptx-engine/src/table-grid.ts'),
-      '@genoffice/pptx-engine/background-promote': resolve(
+      '@byeol/pptx-engine/table-grid': resolve(here, '../pptx-engine/src/table-grid.ts'),
+      '@byeol/pptx-engine/background-promote': resolve(
         here,
         '../pptx-engine/src/background-promote.ts',
       ),
-      '@genoffice/pptx-engine': resolve(here, '../pptx-engine/src/index.ts'),
+      '@byeol/pptx-engine': resolve(here, '../pptx-engine/src/index.ts'),
     },
   },
   test: {

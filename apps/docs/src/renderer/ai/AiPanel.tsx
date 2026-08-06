@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Editor } from '@tiptap/core'
-import type { Block } from '@genoffice/docx-engine'
-import { AgentLoop, composeSkills, type AgentImage } from '@genoffice/agent-core'
+import type { Block } from '@byeol/docx-engine'
+import { AgentLoop, composeSkills, type AgentImage } from '@byeol/agent-core'
 import type { AiSettings, AttachmentAddResult, AttachmentMeta } from '../../shared/ipc'
 import { ATTACHMENT_IMAGE_EXTS } from '../../shared/ipc'
 import type { PmNode } from '../editor/convert'
@@ -13,9 +13,7 @@ import { DOCS_AGENT_MAX_TURNS, DOCS_CONTINUE_INSTRUCTION } from './continuation'
 import { createFilesSkill } from './files-skill'
 import { createElectronTransport } from './transport'
 import { useI18n, t as tModule, aiLangDirective, type StringKey } from '../i18n/locale'
-import { Markdown } from '@genoffice/ui'
-import { AiComposer, AiTypingIndicator } from '@genoffice/ui'
-import { GensparkMark } from '../components/icons'
+import { AiComposer, AiTypingIndicator, ByeolMark, IconSettings, Markdown } from '@byeol/ui'
 import sendEnterOn from '../assets/send-enter-on.png'
 import sendEnterOff from '../assets/send-enter-off.png'
 import sendStop from '../assets/send-stop.png'
@@ -135,6 +133,8 @@ interface AiPanelProps {
   onExpand?: () => void
   /** collapse the panel to the sidebar rail */
   onCollapse?: () => void
+  /** open the persisted provider/model settings dialog */
+  onOpenSettings?: () => void
   /** Absolute path of the currently open file (used for chat-history persistence) */
   filePath?: string | null
 }
@@ -149,6 +149,7 @@ export function AiPanel({
   open = true,
   onExpand,
   onCollapse,
+  onOpenSettings,
   filePath,
 }: AiPanelProps) {
   const { t } = useI18n()
@@ -462,22 +463,23 @@ export function AiPanel({
             }
             return next
           })
-          // Signed-out failures get an inline sign-in button; detected via
-          // gsk status rather than matching the localized error text
-          void window.desktop
-            .aiGskStatus()
-            .then((status) => {
-              if (status.loggedIn) return
-              setChat((prev) => {
-                const next = [...prev]
-                const last = next.at(-1)
-                if (last?.role === 'assistant' && last.error) {
-                  next[next.length - 1] = { ...last, loginRequired: true }
-                }
-                return next
+          // Only Genspark-provider failures may be caused by the shared gsk login state.
+          if (settingsRef.current.provider === 'genspark') {
+            void window.desktop
+              .aiGskStatus()
+              .then((status) => {
+                if (status.loggedIn) return
+                setChat((prev) => {
+                  const next = [...prev]
+                  const last = next.at(-1)
+                  if (last?.role === 'assistant' && last.error) {
+                    next[next.length - 1] = { ...last, loginRequired: true }
+                  }
+                  return next
+                })
               })
-            })
-            .catch(() => {})
+              .catch(() => {})
+          }
           setBusy(false)
         },
       },
@@ -655,7 +657,7 @@ export function AiPanel({
   const resizeCleanupRef = useRef<(() => void) | null>(null)
   useEffect(() => () => resizeCleanupRef.current?.(), [])
 
-  /** drag the panel's right edge to resize; panel is flush with the window's left edge */
+  /** Drag the panel's left edge to resize; the panel is docked to the window's right edge. */
   const startResize = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault()
     const resizer = e.currentTarget
@@ -663,7 +665,7 @@ export function AiPanel({
     document.body.style.cursor = 'col-resize'
     document.body.style.userSelect = 'none'
     const onMove = (ev: PointerEvent) => {
-      setPanelWidth(clampPanelWidth(ev.clientX))
+      setPanelWidth(clampPanelWidth(window.innerWidth - ev.clientX))
     }
     let done = false
     const cleanup = () => {
@@ -695,7 +697,7 @@ export function AiPanel({
   if (!open) {
     return (
       <button className="ai-rail" title={t('appExpandAiPanel')} onClick={onExpand}>
-        <GensparkMark size={22} />
+        <ByeolMark size={22} />
       </button>
     )
   }
@@ -726,13 +728,18 @@ export function AiPanel({
       />
       <div className="ai-panel-header">
         <span className="ai-panel-title">
-          <GensparkMark size={22} />
+          <ByeolMark size={22} />
           {t('aiPanelTitle')}
         </span>
         <div className="ai-panel-header-actions">
           {chat.length > 0 && (
             <button className="ai-header-btn" onClick={newChat} title={t('aiNewChatTitle')}>
               <IconNewChat size={16} />
+            </button>
+          )}
+          {onOpenSettings && (
+            <button className="ai-header-btn" onClick={onOpenSettings} title="AI settings">
+              <IconSettings size={16} />
             </button>
           )}
           {onCollapse && (

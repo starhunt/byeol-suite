@@ -146,10 +146,17 @@ export async function chatForProvider(
       case 'gemini':
         return chatGemini(wd, config, system, user)
       case 'deepseek':
-      case 'openai':
         return chatOpenAiCompatible(
           wd,
           OPENAI_COMPATIBLE_BASE_URLS[provider]!,
+          config,
+          system,
+          user,
+        )
+      case 'openai':
+        return chatOpenAiCompatible(
+          wd,
+          config.baseUrl || OPENAI_COMPATIBLE_BASE_URLS.openai!,
           config,
           system,
           user,

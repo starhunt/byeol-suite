@@ -64,7 +64,7 @@ describe('chatForProvider', () => {
     expect(result).toEqual({ ok: true, content: 'hi there' })
   })
 
-  it('deepseek and openai hit their fixed base URLs', async () => {
+  it('deepseek hits its fixed base URL', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValue(jsonResponse({ choices: [{ message: { content: 'ok' } }] }))
@@ -72,6 +72,23 @@ describe('chatForProvider', () => {
     await chatForProvider('deepseek', { apiKey: 'k', model: 'deepseek-chat' }, 'sys', 'hi')
     expect(fetchMock).toHaveBeenCalledWith(
       'https://api.deepseek.com/v1/chat/completions',
+      expect.anything(),
+    )
+  })
+
+  it('openai uses the configured compatible base URL', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ choices: [{ message: { content: 'ok' } }] }))
+    vi.stubGlobal('fetch', fetchMock)
+    await chatForProvider(
+      'openai',
+      { apiKey: 'k', model: 'codex-tools', baseUrl: 'http://127.0.0.1:8300/v1/' },
+      'sys',
+      'hi',
+    )
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:8300/v1/chat/completions',
       expect.anything(),
     )
   })

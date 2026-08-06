@@ -1,6 +1,6 @@
 {
-  "name": "@genoffice/pdf",
-  "productName": "GenOffice PDF",
+  "name": "@byeol/pdf",
+  "productName": "Byeol PDF",
   "version": "0.1.0",
   "license": "Apache-2.0",
   "private": true,
@@ -14,11 +14,11 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@genoffice/agent-core": "*",
-    "@genoffice/ai-provider": "*",
-    "@genoffice/electron-utils": "*",
-    "@genoffice/i18n": "*",
-    "@genoffice/ui": "*",
+    "@byeol/agent-core": "*",
+    "@byeol/ai-provider": "*",
+    "@byeol/electron-utils": "*",
+    "@byeol/i18n": "*",
+    "@byeol/ui": "*",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.0.4",
@@ -34,5 +34,5 @@
     "vite-plugin-static-copy": "^3.0.0",
     "vitest": "^4.1.10"
   },
-  "author": "GenOffice"
+  "author": "Byeol Suite Contributors"
 }

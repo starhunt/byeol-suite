@@ -13,9 +13,11 @@ export type {
 export {
   AI_PROVIDERS,
   GENSPARK_LLM_BASE_URLS,
+  applyAiEnvironmentOverrides,
   defaultAiSettings,
   resolveAiSettings,
 } from './providers'
+export type { AiEnvironmentOverrides } from './providers'
 export { chatForProvider } from './chat'
 export { AiCreditsError, sseLines, streamForProvider } from './stream'
 export type { StreamCallbacks } from './stream'

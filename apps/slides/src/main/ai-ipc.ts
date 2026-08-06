@@ -10,6 +10,7 @@ import { join } from 'node:path'
 import {
   AiCreditsError,
   AiTimeoutError,
+  applyAiEnvironmentOverrides,
   defaultAiSettings,
   resolveAiSettings,
   streamForProvider,
@@ -18,8 +19,8 @@ import {
   type AiStreamRequest,
   type GenSparkAccountStatus,
   type LegacyAiSettings,
-} from '@genoffice/ai-provider'
-import { fetchWithSsrfGuard } from '@genoffice/electron-utils'
+} from '@byeol/ai-provider'
+import { fetchWithSsrfGuard } from '@byeol/electron-utils'
 import {
   webSearch,
   imageSearch,
@@ -29,13 +30,13 @@ import {
   gskLogin,
   gskLoginInfo,
   hasGskAuth,
-} from '@genoffice/ai-search'
-import { addPicture } from '@genoffice/pptx-engine'
-import { EMU_PER_PX_96 } from '@genoffice/pptx-render'
+} from '@byeol/ai-search'
+import { addPicture } from '@byeol/pptx-engine'
+import { EMU_PER_PX_96 } from '@byeol/pptx-render'
 import { tm } from './i18n-main'
 import { pushHistory, rebuildSlide, sessions } from './session-state'
 
-// ---- AI settings + streaming proxy (the main process does the networking to avoid renderer CORS; implementation shared via @genoffice/ai-provider) ----
+// ---- AI settings + streaming proxy (the main process does the networking to avoid renderer CORS; implementation shared via @byeol/ai-provider) ----
 
 const AI_SETTINGS_PATH = () => join(app.getPath('userData'), 'ai-settings.json')
 
@@ -54,17 +55,18 @@ function writeJson(path: string, value: unknown): void {
 }
 
 const activeAiStreams = new Map<string, AbortController>()
+let aiSettingsChangedThisSession = false
 
 export function registerAiIpc(): void {
   ipcMain.handle('ai:get-settings', (): AiSettings => {
     const stored = readJson<Partial<AiSettings> & LegacyAiSettings>(AI_SETTINGS_PATH(), {})
-    const settings = resolveAiSettings(stored, defaultAiSettings())
-    // AI features all go through Genspark (gsk login); stored settings that chose another provider are normalized back
-    settings.provider = 'genspark'
-    return settings
+    const resolved = resolveAiSettings(stored, defaultAiSettings())
+    return aiSettingsChangedThisSession
+      ? resolved
+      : applyAiEnvironmentOverrides(resolved, process.env)
   })
 
-  // Genspark account (gsk login state): the auth source for AI features; when logged out the frontend uses this to guide login
+  // Genspark account state: used only when the Genspark provider is selected.
   ipcMain.handle(
     'ai:gsk-status',
     async (_event, withEmail?: boolean): Promise<GenSparkAccountStatus> => {
@@ -81,6 +83,7 @@ export function registerAiIpc(): void {
 
   ipcMain.handle('ai:set-settings', (_event, settings: AiSettings) => {
     writeJson(AI_SETTINGS_PATH(), settings)
+    aiSettingsChangedThisSession = true
   })
 
   ipcMain.handle('ai:stream', async (event, request: AiStreamRequest) => {

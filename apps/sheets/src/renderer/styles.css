@@ -1222,17 +1222,20 @@ select.select-like {
   font-size: 12px;
 }
 
-/* AI panel on the left, spanning from the ribbon to the status bar (unified with docs);
+/* AI panel on the right, spanning from the ribbon to the status bar;
  * its column is drag-resizable: driven by --copilot-width (updated by the AiChatPanel resizer) */
 .sheet-body {
   display: grid;
-  grid-template-columns: var(--copilot-width, 360px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) var(--copilot-width, 360px);
+  grid-template-rows: minmax(0, 1fr);
   min-height: 0;
   transition: grid-template-columns 180ms ease;
 }
 
 /* formula-bar row + spreadsheet */
 .sheet-main {
+  grid-column: 1;
+  grid-row: 1;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   min-width: 0;
@@ -1309,7 +1312,7 @@ select.select-like {
 }
 
 .app-shell.copilot-collapsed .sheet-body {
-  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 34px;
 }
 
 .spreadsheet {
@@ -1349,14 +1352,16 @@ select.select-like {
 }
 
 .copilot {
+  grid-column: 2;
+  grid-row: 1;
   position: relative;
   display: flex;
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
-  border-right: 1px solid var(--color-border-default);
+  border-left: 1px solid var(--color-border-default);
   background: var(--color-bg-page);
-  box-shadow: 4px 0 16px rgb(24 60 40 / 5%);
+  box-shadow: -4px 0 16px rgb(24 60 40 / 5%);
   font-family: var(--gs-font-sans);
   color: var(--color-text-primary);
 }
@@ -1369,11 +1374,11 @@ select.select-like {
   box-shadow: none;
 }
 
-/* drag handle on the panel's right edge — resize the panel horizontally
+/* drag handle on the right-docked panel's left edge
  * (.copilot is overflow: hidden, so the handle must sit fully inside the panel) */
 .ai-panel-resizer {
   position: absolute;
-  right: 0;
+  left: 0;
   top: 0;
   bottom: 0;
   width: 6px;
@@ -1438,19 +1443,6 @@ select.select-like {
   height: 22px;
   border-radius: 7px;
   box-shadow: 0 2px 6px rgb(74 92 255 / 25%);
-}
-
-/* Genspark brand logo (shared by the collapse button and the AI panel title) */
-.genspark-badge {
-  display: block;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-}
-
-.ai-panel-title .genspark-badge {
-  width: 18px;
-  height: 18px;
 }
 
 .ai-panel-header-actions {

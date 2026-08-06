@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { AgentToolCall } from '@genoffice/agent-core'
+import type { AgentToolCall } from '@byeol/agent-core'
 import { AiCreditsError, sseLines, streamForProvider } from '../src/stream'
 import { jsonResponse, okResponse, sseStream } from './test-utils'
 
@@ -480,7 +480,7 @@ describe('streamForProvider: openai-compatible', () => {
     ).rejects.toThrow(/The model returned no content/)
   })
 
-  it('routes deepseek and openai to their fixed base URLs', async () => {
+  it('routes deepseek to its fixed base URL', async () => {
     const fetchMock = vi.fn().mockResolvedValue(okResponse(sseStream(['data: [DONE]'])))
     vi.stubGlobal('fetch', fetchMock)
     const { cb } = collector()
@@ -495,6 +495,25 @@ describe('streamForProvider: openai-compatible', () => {
     )
     expect(fetchMock).toHaveBeenCalledWith(
       'https://api.deepseek.com/v1/chat/completions',
+      expect.anything(),
+    )
+  })
+
+  it('uses the configured base URL for the OpenAI provider', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(okResponse(sseStream(['data: [DONE]'])))
+    vi.stubGlobal('fetch', fetchMock)
+    const { cb } = collector()
+    await streamForProvider(
+      'openai',
+      { apiKey: 'k', model: 'codex-tools', baseUrl: 'http://127.0.0.1:8300/v1/' },
+      'sys',
+      [],
+      [],
+      100,
+      cb,
+    )
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:8300/v1/chat/completions',
       expect.anything(),
     )
   })

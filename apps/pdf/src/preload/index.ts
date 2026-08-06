@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { Lang } from '@genoffice/i18n'
-import type { AiStreamChunk } from '@genoffice/ai-provider'
+import type { Lang } from '@byeol/i18n'
+import type { AiStreamChunk } from '@byeol/ai-provider'
 import { AI_CHANNELS, PDF_CHANNELS } from '../shared/ipc'
 import type { PdfApi } from '../shared/ipc'
 
@@ -36,6 +36,7 @@ const api: PdfApi = {
     return () => ipcRenderer.removeListener(PDF_CHANNELS.languageChanged, listener)
   },
   getAiSettings: () => ipcRenderer.invoke(AI_CHANNELS.getSettings),
+  setAiSettings: (settings) => ipcRenderer.invoke(AI_CHANNELS.setSettings, settings),
   aiStream: (request) => ipcRenderer.invoke(AI_CHANNELS.stream, request),
   aiStreamCancel: (requestId) => ipcRenderer.invoke(AI_CHANNELS.streamCancel, requestId),
   onAiStream: (handler) => {

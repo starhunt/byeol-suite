@@ -1,4 +1,4 @@
-# Contributing to GenOffice
+# Contributing to Byeol Suite
 
 Thanks for your interest in contributing. This document covers the local
 setup, the checks a change must pass, and the conventions used in this
@@ -6,19 +6,11 @@ repository.
 
 ## How changes land here
 
-This GitHub repository is a mirror: development happens in a private tree,
-and `main` here advances through single squashed snapshot commits
-(`Sync snapshot (<date>)`). That is why every file in a sync shows the same
-last-commit message, and why nobody — maintainers included — pushes to
-`main` directly.
-
-External pull requests are welcome and are reviewed here. Once a change is
-accepted, a maintainer imports it into the private tree with your authorship
-preserved as a `Co-authored-by:` trailer, and it ships to `main` in the next
-snapshot; your PR is then closed with a note pointing at the snapshot that
-carried it. GitHub will show the PR as "closed" rather than "merged" — the
-code and the attribution still land. Issues and feature requests are handled
-directly on this repository as usual.
+`main` is the stable integration branch. Create a focused branch, open a pull
+request against `main`, and let the required checks finish before merge.
+Maintainers normally squash-merge accepted pull requests so each change has a
+clear entry in the public history. Issues and feature requests are handled
+directly in this repository.
 
 ## Repository layout
 
@@ -97,16 +89,20 @@ or copy an existing `target/release/xlsx-sidecar.exe` to
 None are required — the apps run with all of these unset. They exist for
 testing and local overrides:
 
-| Variable                                                 | Effect                                                                 |
-| -------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `GENOFFICE_USER_DATA`                                    | Override the Electron userData directory (test isolation)              |
-| `GENOFFICE_LANG`                                         | Force the UI language instead of following the OS locale               |
-| `GENOFFICE_FAKE_UPDATE`                                  | Exercise the updater UI without a real release feed                    |
-| `GENOFFICE_CLOUD_SLIDE`, `GENOFFICE_CLOUD_SLIDE_TIER`    | Route slide generation through the cloud endpoint                      |
-| `GSK_API_KEY`, `GSK_CLI_PATH`                            | Genspark credentials / CLI location for the built-in AI provider       |
-| `AI_SEARCH_DISABLE_GSK`, `SERPER_API_KEY`                | Disable the gsk search backend / supply a Serper key instead           |
-| `XLSX_SIDECAR_PATH`, `XLSX_OPEN_PATH`, `XLSX_DEBUG_PORT` | Point at a locally built xlsx sidecar and its debug port               |
-| `*_DEV_PORT`, `*_RENDERER_URL`                           | Per-app Vite dev server ports and renderer URLs (set by `npm run dev`) |
+| Variable                                                  | Effect                                                                 |
+| --------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `BYEOL_USER_DATA`                                         | Override the Electron userData directory (test isolation)              |
+| `BYEOL_LANG`                                              | Force the UI language instead of following the OS locale               |
+| `BYEOL_FAKE_UPDATE`                                       | Exercise the updater UI without a real release feed                    |
+| `BYEOL_CLOUD_SLIDE`, `BYEOL_CLOUD_SLIDE_TIER`             | Route slide generation through the cloud endpoint                      |
+| `BYEOL_AI_BASE_URL`, `BYEOL_AI_API_KEY`, `BYEOL_AI_MODEL` | Select an OpenAI-compatible endpoint for the current process           |
+| `GSK_API_KEY`, `GSK_CLI_PATH`                             | Genspark credentials / CLI location for the built-in AI provider       |
+| `AI_SEARCH_DISABLE_GSK`, `SERPER_API_KEY`                 | Disable the gsk search backend / supply a Serper key instead           |
+| `XLSX_SIDECAR_PATH`, `XLSX_OPEN_PATH`, `XLSX_DEBUG_PORT`  | Point at a locally built xlsx sidecar and its debug port               |
+| `*_DEV_PORT`, `*_RENDERER_URL`                            | Per-app Vite dev server ports and renderer URLs (set by `npm run dev`) |
+
+The former `GENOFFICE_*` names remain accepted as migration fallbacks for
+existing scripts, except for the new `BYEOL_AI_*` endpoint overrides.
 
 AI features degrade rather than break without credentials: requests surface an
 inline sign-in prompt, and web search falls back to a keyless backend.
@@ -158,7 +154,7 @@ the [Apache License 2.0](LICENSE) that covers this project — inbound =
 outbound, per Apache-2.0 §5. Because community contributions keep their
 Apache-2.0 terms, the open-source core cannot be retroactively relicensed.
 
-The `ee/` directory is reserved for future enterprise modules under a
+The inherited `ee/` directory remains under its upstream
 [separate license](ee/LICENSE) and does not accept external contributions —
 pull requests from outside the maintainer team must not modify files under
 `ee/` (enforced via [CODEOWNERS](.github/CODEOWNERS)).

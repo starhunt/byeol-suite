@@ -5,7 +5,9 @@ import type { CSSProperties, ReactElement, ReactNode, RefObject } from 'react'
 import { GlobalWorkerOptions, TextLayer, getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import type { PDFDocumentProxy, RenderTask } from 'pdfjs-dist'
 import workerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url'
-import { AiPanel, GensparkMark } from './ai/AiPanel'
+import { AiPanel } from './ai/AiPanel'
+import { AI_PROVIDERS, type AiSettings } from '@byeol/ai-provider'
+import { AiSettingsDialog, ByeolMark } from '@byeol/ui'
 import type { PdfAiDeps } from './ai/tools'
 import {
   MARKUP_COLORS,
@@ -553,7 +555,7 @@ function parsePageRanges(input: string, max: number): number[] | null {
 }
 
 export default function App() {
-  const { t } = useI18n()
+  const { lang, t } = useI18n()
   const [doc, setDoc] = useState<PDFDocumentProxy | null>(null)
   const [filePath, setFilePath] = useState('')
   const [status, setStatus] = useState<'loading' | 'error' | 'empty' | 'password' | 'ready'>(
@@ -566,6 +568,12 @@ export default function App() {
   const [pageInput, setPageInput] = useState('1')
   const [sidebar, setSidebar] = useState<'thumbs' | 'outline' | null>('thumbs')
   const [aiCollapsed, setAiCollapsed] = useState(false)
+  const [aiSettings, setAiSettings] = useState<AiSettings | null>(null)
+  const [showAiSettings, setShowAiSettings] = useState(false)
+
+  useEffect(() => {
+    void window.pdfApi.getAiSettings().then(setAiSettings)
+  }, [])
   const [spread, setSpread] = useState<1 | 2>(1)
   const [nightMode, setNightMode] = useState(false)
   const [outline, setOutline] = useState<OutlineNode[] | null>(null)
@@ -1984,7 +1992,7 @@ export default function App() {
                 onClick={() => setAiCollapsed((v) => !v)}
               >
                 <span className="rb-big-icon">
-                  <GensparkMark size={28} />
+                  <ByeolMark size={28} />
                 </span>
                 <span>{t('ribbonAiAssistant')}</span>
               </button>
@@ -2002,10 +2010,14 @@ export default function App() {
               title={t('aiOpenAssistant')}
               onClick={() => setAiCollapsed(false)}
             >
-              <GensparkMark size={22} />
+              <ByeolMark size={22} />
             </button>
           )}
-          <AiPanel api={aiApi} onCollapse={() => setAiCollapsed(true)} />
+          <AiPanel
+            api={aiApi}
+            onCollapse={() => setAiCollapsed(true)}
+            onOpenSettings={() => setShowAiSettings(true)}
+          />
         </div>
         {sidebar === 'outline' && outline && (
           <div className="pdf-thumbs pdf-outline-pane">
@@ -2444,6 +2456,19 @@ export default function App() {
               </div>
             </div>
           </div>
+        )}
+        {showAiSettings && aiSettings && (
+          <AiSettingsDialog
+            settings={aiSettings}
+            providers={AI_PROVIDERS}
+            locale={lang}
+            onClose={() => setShowAiSettings(false)}
+            onSave={async (next) => {
+              await window.pdfApi.setAiSettings(next)
+              setAiSettings(next)
+              setShowAiSettings(false)
+            }}
+          />
         )}
       </div>
     </div>

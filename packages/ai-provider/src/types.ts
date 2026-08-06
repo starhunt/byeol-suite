@@ -1,8 +1,8 @@
-import type { AgentMessage, AgentToolCall, AgentToolDef } from '@genoffice/agent-core'
+import type { AgentMessage, AgentToolCall, AgentToolDef } from '@byeol/agent-core'
 
 export type AiProviderId = 'genspark' | 'anthropic' | 'gemini' | 'deepseek' | 'openai' | 'custom'
 
-/** Genspark account status (gsk login state; the sole auth source for AI features) */
+/** Genspark account status, used when the Genspark provider is selected. */
 export interface GenSparkAccountStatus {
   loggedIn: boolean
   email?: string
@@ -11,7 +11,7 @@ export interface GenSparkAccountStatus {
 export interface AiProviderConfig {
   apiKey: string
   model: string
-  /** only used by the custom (OpenAI-compatible) provider */
+  /** Optional endpoint override for OpenAI-compatible providers. */
   baseUrl?: string | undefined
 }
 
@@ -22,6 +22,7 @@ export interface AiProviderMeta {
   defaultModel: string
   keyPlaceholder: string
   needsBaseUrl?: boolean
+  defaultBaseUrl?: string
 }
 
 export interface AiSettings {

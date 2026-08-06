@@ -9,20 +9,17 @@ const here = dirname(fileURLToPath(import.meta.url))
 // avoids bundling stale implementations when node_modules links point elsewhere)
 const workspaceAlias = {
   // Subpath before the bare name: string aliases are prefix replacements
-  '@genoffice/pptx-engine/table-grid': resolve(
-    here,
-    '../../packages/pptx-engine/src/table-grid.ts',
-  ),
-  '@genoffice/pptx-engine/background-promote': resolve(
+  '@byeol/pptx-engine/table-grid': resolve(here, '../../packages/pptx-engine/src/table-grid.ts'),
+  '@byeol/pptx-engine/background-promote': resolve(
     here,
     '../../packages/pptx-engine/src/background-promote.ts',
   ),
-  '@genoffice/pptx-engine': resolve(here, '../../packages/pptx-engine/src/index.ts'),
-  '@genoffice/pptx-render': resolve(here, '../../packages/pptx-render/src/index.ts'),
+  '@byeol/pptx-engine': resolve(here, '../../packages/pptx-engine/src/index.ts'),
+  '@byeol/pptx-render': resolve(here, '../../packages/pptx-render/src/index.ts'),
 }
 
 export default defineConfig({
-  // Main process/preload must bundle @genoffice/* sources (they are pulled in as TS
+  // Main process/preload must bundle @byeol/* sources (they are pulled in as TS
   // source with extensionless relative imports; externalizing them under Node
   // yields ERR_MODULE_NOT_FOUND).
   main: {
@@ -31,11 +28,11 @@ export default defineConfig({
     plugins: [
       externalizeDepsPlugin({
         exclude: [
-          '@genoffice/pptx-engine',
-          '@genoffice/pptx-render',
-          '@genoffice/ai-search',
-          '@genoffice/file-parse',
-          '@genoffice/electron-utils',
+          '@byeol/pptx-engine',
+          '@byeol/pptx-render',
+          '@byeol/ai-search',
+          '@byeol/file-parse',
+          '@byeol/electron-utils',
           'opentype.js',
         ],
       }),

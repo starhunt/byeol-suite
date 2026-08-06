@@ -112,6 +112,12 @@ const homeApi: HomeApi = {
     if (!isUiLanguage(lang)) throw new Error('Invalid language.')
     await ipcRenderer.invoke(HOME_CHANNELS.setLanguage, lang)
   },
+  async getAiSettings() {
+    return ipcRenderer.invoke(HOME_CHANNELS.aiGetSettings)
+  },
+  async setAiSettings(settings) {
+    await ipcRenderer.invoke(HOME_CHANNELS.aiSetSettings, settings)
+  },
   async accountStatus() {
     const result: unknown = await ipcRenderer.invoke(HOME_CHANNELS.accountStatus)
     return (result ?? { loggedIn: false }) as AccountStatus
@@ -142,8 +148,8 @@ const homeApi: HomeApi = {
   async setOnboardingSeen() {
     await ipcRenderer.invoke(HOME_CHANNELS.setOnboardingSeen)
   },
-  async openGenTeam() {
-    await ipcRenderer.invoke(HOME_CHANNELS.openGenTeam)
+  async openProjectPage() {
+    await ipcRenderer.invoke(HOME_CHANNELS.openProjectPage)
   },
 }
 

@@ -19,9 +19,9 @@ import {
   installNavigationGuard,
   safeExternalUrl,
   windowMenuTemplate,
-} from '@genoffice/electron-utils'
-import { createI18n, getUiLang, normalizeLang, setUiLang } from '@genoffice/i18n'
-import { ProjectStore } from '@genoffice/project-store'
+} from '@byeol/electron-utils'
+import { createI18n, getUiLang, normalizeLang, setUiLang } from '@byeol/i18n'
+import { ProjectStore } from '@byeol/project-store'
 import type {
   IpcMainInvokeEvent,
   MenuItemConstructorOptions,
@@ -29,10 +29,11 @@ import type {
   SaveDialogOptions,
   WebContents,
 } from 'electron'
-import { parseFileToText } from '@genoffice/file-parse'
+import { parseFileToText } from '@byeol/file-parse'
 import {
   AiCreditsError,
   AiTimeoutError,
+  applyAiEnvironmentOverrides,
   chatForProvider,
   defaultAiSettings,
   resolveAiSettings,
@@ -43,7 +44,7 @@ import {
   type AiStreamRequest,
   type GenSparkAccountStatus,
   type LegacyAiSettings,
-} from '@genoffice/ai-provider'
+} from '@byeol/ai-provider'
 import {
   gskApiKey,
   gskLogin,
@@ -51,7 +52,7 @@ import {
   hasGskAuth,
   webSearch,
   imageSearch,
-} from '@genoffice/ai-search'
+} from '@byeol/ai-search'
 import type {
   AttachmentAddResult,
   AttachmentImageResult,
@@ -167,7 +168,7 @@ const tMain = createI18n({
     menuMacros: '宏',
     menuWindow: '窗口',
     menuHelp: '帮助',
-    menuDocsHelp: 'GenOffice Docs 帮助',
+    menuDocsHelp: 'Byeol Docs 帮助',
   },
   en: {
     dlgOpenDoc: 'Open Document',
@@ -261,7 +262,7 @@ const tMain = createI18n({
     menuMacros: 'Macros',
     menuWindow: 'Window',
     menuHelp: 'Help',
-    menuDocsHelp: 'GenOffice Docs Help',
+    menuDocsHelp: 'Byeol Docs Help',
   },
   ja: {
     dlgOpenDoc: '文書を開く',
@@ -355,7 +356,7 @@ const tMain = createI18n({
     menuMacros: 'マクロ',
     menuWindow: 'ウィンドウ',
     menuHelp: 'ヘルプ',
-    menuDocsHelp: 'GenOffice Docs ヘルプ',
+    menuDocsHelp: 'Byeol Docs ヘルプ',
   },
   ko: {
     dlgOpenDoc: '문서 열기',
@@ -450,7 +451,7 @@ const tMain = createI18n({
     menuMacros: '매크로',
     menuWindow: '창',
     menuHelp: '도움말',
-    menuDocsHelp: 'GenOffice Docs 도움말',
+    menuDocsHelp: 'Byeol Docs 도움말',
   },
   fr: {
     dlgOpenDoc: 'Ouvrir un document',
@@ -546,7 +547,7 @@ const tMain = createI18n({
     menuMacros: 'Macros',
     menuWindow: 'Fenêtre',
     menuHelp: 'Aide',
-    menuDocsHelp: 'Aide GenOffice Docs',
+    menuDocsHelp: 'Aide Byeol Docs',
   },
   de: {
     dlgOpenDoc: 'Dokument öffnen',
@@ -642,7 +643,7 @@ const tMain = createI18n({
     menuMacros: 'Makros',
     menuWindow: 'Fenster',
     menuHelp: 'Hilfe',
-    menuDocsHelp: 'GenOffice Docs-Hilfe',
+    menuDocsHelp: 'Byeol Docs-Hilfe',
   },
   es: {
     dlgOpenDoc: 'Abrir documento',
@@ -737,7 +738,7 @@ const tMain = createI18n({
     menuMacros: 'Macros',
     menuWindow: 'Ventana',
     menuHelp: 'Ayuda',
-    menuDocsHelp: 'Ayuda de GenOffice Docs',
+    menuDocsHelp: 'Ayuda de Byeol Docs',
   },
   th: {
     dlgOpenDoc: 'เปิดเอกสาร',
@@ -831,7 +832,7 @@ const tMain = createI18n({
     menuMacros: 'แมโคร',
     menuWindow: 'หน้าต่าง',
     menuHelp: 'วิธีใช้',
-    menuDocsHelp: 'วิธีใช้ GenOffice Docs',
+    menuDocsHelp: 'วิธีใช้ Byeol Docs',
   },
   id: {
     dlgOpenDoc: 'Buka Dokumen',
@@ -925,7 +926,7 @@ const tMain = createI18n({
     menuMacros: 'Makro',
     menuWindow: 'Jendela',
     menuHelp: 'Bantuan',
-    menuDocsHelp: 'Bantuan GenOffice Docs',
+    menuDocsHelp: 'Bantuan Byeol Docs',
   },
   ru: {
     dlgOpenDoc: 'Открыть документ',
@@ -1020,7 +1021,7 @@ const tMain = createI18n({
     menuMacros: 'Макросы',
     menuWindow: 'Окно',
     menuHelp: 'Справка',
-    menuDocsHelp: 'Справка GenOffice Docs',
+    menuDocsHelp: 'Справка Byeol Docs',
   },
   ar: {
     dlgOpenDoc: 'فتح مستند',
@@ -1115,7 +1116,7 @@ const tMain = createI18n({
     menuMacros: 'وحدات الماكرو',
     menuWindow: 'نافذة',
     menuHelp: 'تعليمات',
-    menuDocsHelp: 'تعليمات GenOffice Docs',
+    menuDocsHelp: 'تعليمات Byeol Docs',
   },
   pt: {
     dlgOpenDoc: 'Abrir Documento',
@@ -1210,7 +1211,7 @@ const tMain = createI18n({
     menuMacros: 'Macros',
     menuWindow: 'Janela',
     menuHelp: 'Ajuda',
-    menuDocsHelp: 'Ajuda do GenOffice Docs',
+    menuDocsHelp: 'Ajuda do Byeol Docs',
   },
   it: {
     dlgOpenDoc: 'Apri documento',
@@ -1305,7 +1306,7 @@ const tMain = createI18n({
     menuMacros: 'Macro',
     menuWindow: 'Finestra',
     menuHelp: 'Aiuto',
-    menuDocsHelp: 'Guida di GenOffice Docs',
+    menuDocsHelp: 'Guida di Byeol Docs',
   },
   pl: {
     dlgOpenDoc: 'Otwórz dokument',
@@ -1400,7 +1401,7 @@ const tMain = createI18n({
     menuMacros: 'Makra',
     menuWindow: 'Okno',
     menuHelp: 'Pomoc',
-    menuDocsHelp: 'Pomoc GenOffice Docs',
+    menuDocsHelp: 'Pomoc Byeol Docs',
   },
   nl: {
     dlgOpenDoc: 'Document openen',
@@ -1495,7 +1496,7 @@ const tMain = createI18n({
     menuMacros: "Macro's",
     menuWindow: 'Venster',
     menuHelp: 'Help',
-    menuDocsHelp: 'GenOffice Docs Help',
+    menuDocsHelp: 'Byeol Docs Help',
   },
   ms: {
     dlgOpenDoc: 'Buka Dokumen',
@@ -1590,7 +1591,7 @@ const tMain = createI18n({
     menuMacros: 'Makro',
     menuWindow: 'Tetingkap',
     menuHelp: 'Bantuan',
-    menuDocsHelp: 'Bantuan GenOffice Docs',
+    menuDocsHelp: 'Bantuan Byeol Docs',
   },
   he: {
     dlgOpenDoc: 'פתיחת מסמך',
@@ -1683,7 +1684,7 @@ const tMain = createI18n({
     menuMacros: 'פקודות מאקרו',
     menuWindow: 'חלון',
     menuHelp: 'עזרה',
-    menuDocsHelp: 'עזרה של GenOffice Docs',
+    menuDocsHelp: 'עזרה של Byeol Docs',
   },
   hi: {
     dlgOpenDoc: 'दस्तावेज़ खोलें',
@@ -1778,7 +1779,7 @@ const tMain = createI18n({
     menuMacros: 'मैक्रो',
     menuWindow: 'विंडो',
     menuHelp: 'सहायता',
-    menuDocsHelp: 'GenOffice Docs सहायता',
+    menuDocsHelp: 'Byeol Docs सहायता',
   },
   'zh-TW': {
     dlgOpenDoc: '開啟文件',
@@ -1870,7 +1871,7 @@ const tMain = createI18n({
     menuMacros: '巨集',
     menuWindow: '視窗',
     menuHelp: '說明',
-    menuDocsHelp: 'GenOffice Docs 說明',
+    menuDocsHelp: 'Byeol Docs 說明',
   },
 })
 const tm = (key: Parameters<typeof tMain>[1], params?: Parameters<typeof tMain>[2]) =>
@@ -1949,7 +1950,7 @@ async function saveDialog(event: IpcMainInvokeEvent, options: SaveDialogOptions)
 
 /** default folder where new files land on their first (silent) save; shared with the other editors via shell */
 export function defaultSaveDir(): string {
-  const dir = join(app.getPath('documents'), 'GenOffice')
+  const dir = join(app.getPath('documents'), 'Byeol Suite')
   mkdirSync(dir, { recursive: true })
   return dir
 }
@@ -2338,7 +2339,7 @@ const TEXT_EXTS = new Set([
   'sql',
   'css',
 ])
-/** office/pdf formats get text extracted via @genoffice/file-parse; images skip extraction and go multimodal (files:read-image) */
+/** office/pdf formats get text extracted via @byeol/file-parse; images skip extraction and go multimodal (files:read-image) */
 const ATTACHMENT_EXTS = new Set([
   ...TEXT_EXTS,
   'docx',
@@ -2427,7 +2428,7 @@ function savePastedImage(data: unknown, ext: unknown): string | null {
         ? Buffer.from(data.buffer, data.byteOffset, data.byteLength)
         : null
   if (!bytes || bytes.byteLength === 0) return null
-  const dir = join(app.getPath('temp'), 'genoffice-pasted')
+  const dir = join(app.getPath('temp'), 'byeol-suite-pasted')
   mkdirSync(dir, { recursive: true })
   prunePastedImages(dir)
   const stamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '-')
@@ -2436,7 +2437,7 @@ function savePastedImage(data: unknown, ext: unknown): string | null {
   return filePath
 }
 
-/** parse an attachment to text via @genoffice/file-parse (docx/pdf/pptx/xlsx/plain text) */
+/** parse an attachment to text via @byeol/file-parse (docx/pdf/pptx/xlsx/plain text) */
 async function extractAttachmentText(filePath: string): Promise<string> {
   const stat = statSync(filePath)
   const stamp = `${stat.mtimeMs}:${stat.size}`
@@ -2462,11 +2463,12 @@ const TWIPS_PER_INCH = 1440
 
 // ---- AI settings + chat proxy (main process avoids renderer CORS) ----
 // provider metadata, settings defaults/migration, and per-provider streaming/chat
-// implementations live in @genoffice/ai-provider, shared with apps/sheets.
+// implementations live in @byeol/ai-provider, shared with apps/sheets.
 
 const SETTINGS_PATH = () => userDataPath('ai-settings.json')
 
 const activeAiStreams = new Map<string, AbortController>()
+let aiSettingsChangedThisSession = false
 
 /**
  * AI settings + chat/stream proxy handlers. Split out so the shell can
@@ -2476,13 +2478,13 @@ const activeAiStreams = new Map<string, AbortController>()
 export function registerAiIpc(): void {
   ipcMain.handle('ai:get-settings', (): AiSettings => {
     const stored = readJson<Partial<AiSettings> & LegacyAiSettings>(SETTINGS_PATH(), {})
-    const settings = resolveAiSettings(stored, defaultAiSettings())
-    // AI features all go through Genspark (gsk login); legacy settings with another provider are reset
-    settings.provider = 'genspark'
-    return settings
+    const resolved = resolveAiSettings(stored, defaultAiSettings())
+    return aiSettingsChangedThisSession
+      ? resolved
+      : applyAiEnvironmentOverrides(resolved, process.env)
   })
 
-  // Genspark account (gsk login state): auth source for AI features; the frontend uses it to prompt login when logged out
+  // Genspark account state: used only when the Genspark provider is selected.
   ipcMain.handle(
     'ai:gsk-status',
     async (_event, withEmail?: boolean): Promise<GenSparkAccountStatus> => {
@@ -2499,6 +2501,7 @@ export function registerAiIpc(): void {
 
   ipcMain.handle('ai:set-settings', (_event, settings: AiSettings) => {
     writeJson(SETTINGS_PATH(), settings)
+    aiSettingsChangedThisSession = true
   })
 
   ipcMain.handle('ai:stream', async (event, request: AiStreamRequest) => {
@@ -3464,7 +3467,7 @@ export function createDocsWindow(openPath?: string): BrowserWindow {
     height: 900,
     minWidth: 980,
     minHeight: 600,
-    title: 'GenOffice Docs',
+    title: 'Byeol Docs',
     // Word-like custom title bar (document name centered, quick-access buttons)
     ...(process.platform === 'darwin'
       ? { titleBarStyle: 'hiddenInset' as const }
@@ -3737,8 +3740,8 @@ export function startDocsStandalone(): void {
   installContextMenu(app, () => contextMenuLabels(getUiLang()))
   // dev runs must not share the packaged app's userData (recent files, AI settings)
   // or its single-instance lock — otherwise `npm run dev` silently quits whenever
-  // the installed GenOffice Docs is open and forwards its argv there instead.
-  if (isDev) app.setPath('userData', join(app.getPath('appData'), 'GenOffice Docs Dev'))
+  // the installed Byeol Docs is open and forwards its argv there instead.
+  if (isDev) app.setPath('userData', join(app.getPath('appData'), 'Byeol Docs Dev'))
 
   const hasSingleInstanceLock = app.requestSingleInstanceLock()
   if (!hasSingleInstanceLock) {
@@ -3762,7 +3765,9 @@ export function startDocsStandalone(): void {
   registerDocsIpc()
 
   app.whenReady().then(() => {
-    setUiLang(normalizeLang(process.env.GENOFFICE_LANG ?? app.getLocale()))
+    setUiLang(
+      normalizeLang(process.env.BYEOL_LANG ?? process.env.GENOFFICE_LANG ?? app.getLocale()),
+    )
     // packaged builds get the Dock icon from icon.icns; dev shows Electron's default
     if (isDev && process.platform === 'darwin') {
       app.dock?.setIcon(join(app.getAppPath(), 'build/icon.png'))

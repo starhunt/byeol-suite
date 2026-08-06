@@ -4,12 +4,7 @@
  * with execute_slide_script. Runs in its own AgentLoop per page (fresh context, so the
  * QC cost doesn't ride on the main conversation), orchestrated by AiPanel.
  */
-import {
-  AgentLoop,
-  type AgentImage,
-  type AgentSkill,
-  type AgentTransport,
-} from '@genoffice/agent-core'
+import { AgentLoop, type AgentImage, type AgentSkill, type AgentTransport } from '@byeol/agent-core'
 import { auditSlideLayout } from './layout-audit'
 import { createSlidesSkill, formatSlideDump, type DeckAccess } from './slides-skill'
 
