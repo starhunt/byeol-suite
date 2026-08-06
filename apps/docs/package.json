@@ -34,7 +34,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.0.4",
-    "electron": "^41.0.3",
+    "electron": "^41.10.4",
     "electron-builder": "^26.0.12",
     "electron-vite": "^5.0.0",
     "jsdom": "^28.0.0",
@@ -49,7 +49,7 @@
   "build": {
     "appId": "io.github.starhunt.byeolsuite.docs",
     "productName": "Byeol Docs",
-    "electronVersion": "41.7.1",
+    "electronVersion": "41.10.4",
     "artifactName": "ByeolDocs-${version}-${arch}.${ext}",
     "directories": {
       "output": "release"

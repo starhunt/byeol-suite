@@ -24,7 +24,7 @@ directly in this repository.
 
 ## Getting started
 
-Prerequisites: Node 20+, npm 10+, and a Rust toolchain (`cargo` on PATH,
+Prerequisites: Node 22.12+, npm 10+, and a Rust toolchain (`cargo` on PATH,
 needed only for the sheets xlsx sidecar).
 
 ```bash

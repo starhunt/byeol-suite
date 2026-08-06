@@ -39,7 +39,7 @@ for (const rel of [
 const config = {
   appId: 'io.github.starhunt.byeolsuite',
   productName: 'Byeol Suite',
-  electronVersion: '41.7.1',
+  electronVersion: '41.10.4',
   directories: {
     output: 'release',
   },
