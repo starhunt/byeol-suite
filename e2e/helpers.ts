@@ -2,7 +2,7 @@
  * Shared launcher for Electron E2E tests.
  *
  * Each test boots the built shell (`apps/shell/out`) against a scratch
- * userData dir (via GENOFFICE_USER_DATA) so runs never touch real settings
+ * userData dir (via BYEOL_USER_DATA) so runs never touch real settings
  * and never collide with a running install's single-instance lock.
  * Build first: `npm run build:all`.
  */
@@ -21,7 +21,7 @@ const SHELL_MAIN = join(SHELL_DIR, 'out/main/index.js')
 interface LaunchOptions {
   /** reuse a previous scratch dir to simulate a second launch */
   userDataDir?: string
-  /** UI language override (GENOFFICE_LANG); defaults to English for stable assertions */
+  /** UI language override (BYEOL_LANG); defaults to English for stable assertions */
   lang?: string
   /** pre-seed app-settings.json with onboardingSeen=true to start at the home screen */
   onboardingSeen?: boolean
@@ -29,6 +29,8 @@ interface LaunchOptions {
   videoDir: string
   /** absolute document path passed as argv, opened in an editor tab on launch */
   openFile?: string
+  /** additional process-local environment overrides */
+  environment?: Record<string, string>
 }
 
 export interface LaunchedApp {
@@ -41,7 +43,7 @@ export async function launchShell(options: LaunchOptions): Promise<LaunchedApp> 
   if (!existsSync(SHELL_MAIN)) {
     throw new Error(`Missing build output at ${SHELL_MAIN} — run \`npm run build:all\` first`)
   }
-  const userDataDir = options.userDataDir ?? (await mkdtemp(join(tmpdir(), 'genoffice-e2e-')))
+  const userDataDir = options.userDataDir ?? (await mkdtemp(join(tmpdir(), 'byeol-suite-e2e-')))
   if (options.onboardingSeen) {
     await writeFile(
       join(userDataDir, 'app-settings.json'),
@@ -67,8 +69,9 @@ export async function launchShell(options: LaunchOptions): Promise<LaunchedApp> 
     args,
     env: {
       ...hostEnv,
-      GENOFFICE_USER_DATA: userDataDir,
-      GENOFFICE_LANG: options.lang ?? 'en',
+      ...options.environment,
+      BYEOL_USER_DATA: userDataDir,
+      BYEOL_LANG: options.lang ?? 'en',
       ...(process.platform === 'linux' ? { ELECTRON_DISABLE_SANDBOX: '1' } : {}),
     },
     // Playwright's Electron screencast wedges the page CDP session on Linux

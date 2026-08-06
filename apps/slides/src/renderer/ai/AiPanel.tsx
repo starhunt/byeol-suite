@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react'
-import { AgentLoop, composeSkills, type AgentImage, type ToolDisplay } from '@genoffice/agent-core'
-import type { RenderSlide } from '@genoffice/pptx-render'
+import { AgentLoop, composeSkills, type AgentImage, type ToolDisplay } from '@byeol/agent-core'
+import type { RenderSlide } from '@byeol/pptx-render'
 import type { AiSettings, AttachmentAddResult, AttachmentMeta } from '../../shared/ipc'
 import { ATTACHMENT_IMAGE_EXTS } from '../../shared/ipc'
 import {
@@ -16,8 +16,7 @@ import { createElectronTransport } from './transport'
 import { renderSlidesToPngBase64 } from '../export-render'
 import { isQcEnabled, mergeQcPages, qcSlidePage, QC_MAX_PAGES } from './slide-qc'
 import { useI18n, t as tGlobal, aiLangDirective, type TFunc } from '../i18n/locale'
-import { Markdown } from '@genoffice/ui'
-import { GensparkMark } from '../components/icons'
+import { ByeolMark, IconSettings, Markdown } from '@byeol/ui'
 import sendEnterOn from '../assets/send-enter-on.png'
 import sendEnterOff from '../assets/send-enter-off.png'
 import sendStop from '../assets/send-stop.png'
@@ -27,7 +26,7 @@ import {
   IconNewChat,
   IconPaperclip,
   IconRefresh,
-  IconSidebarCollapseLeft,
+  IconSidebarCollapse,
 } from '../components/icons'
 
 interface ToolActivity {
@@ -153,6 +152,7 @@ interface AiPanelProps {
   /** expand from the collapsed rail */
   onExpand?: () => void
   onCollapse?: () => void
+  onOpenSettings?: () => void
   /** Visible rollback action; uses the same main-process history as Cmd/Ctrl+Z. */
   onUndo?: () => void
   /** Callback to update the path after AI generation lands on disk (title bar sync) */
@@ -234,6 +234,7 @@ export function AiPanel({
   open = true,
   onExpand,
   onCollapse,
+  onOpenSettings,
   onPathChange,
   onDeckProgress,
   currentFilePath,
@@ -1019,22 +1020,23 @@ export function AiPanel({
             }
             return next
           })
-          // Signed-out failures get an inline sign-in button; detected via
-          // gsk status rather than matching the localized error text
-          void window.slidesApi
-            .aiGskStatus()
-            .then((status) => {
-              if (status.loggedIn) return
-              setChat((prev) => {
-                const next = [...prev]
-                const last = next.at(-1)
-                if (last?.role === 'assistant' && last.error) {
-                  next[next.length - 1] = { ...last, loginRequired: true }
-                }
-                return next
+          // Only Genspark-provider failures may be caused by the shared gsk login state.
+          if (settingsRef.current.provider === 'genspark') {
+            void window.slidesApi
+              .aiGskStatus()
+              .then((status) => {
+                if (status.loggedIn) return
+                setChat((prev) => {
+                  const next = [...prev]
+                  const last = next.at(-1)
+                  if (last?.role === 'assistant' && last.error) {
+                    next[next.length - 1] = { ...last, loginRequired: true }
+                  }
+                  return next
+                })
               })
-            })
-            .catch(() => {})
+              .catch(() => {})
+          }
           void finishHistoryBatch().finally(() => setBusy(false))
         },
       },
@@ -1344,7 +1346,7 @@ export function AiPanel({
   const resizeCleanupRef = useRef<(() => void) | null>(null)
   useEffect(() => () => resizeCleanupRef.current?.(), [])
 
-  /** Drag the right edge to resize: the panel is flush with the window's left edge, so width = clientX */
+  /** Drag the left edge to resize the right-docked panel. */
   const startResize = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault()
     const resizer = e.currentTarget
@@ -1352,7 +1354,7 @@ export function AiPanel({
     document.body.style.cursor = 'col-resize'
     document.body.style.userSelect = 'none'
     const onMove = (ev: PointerEvent) => {
-      setPanelWidth(clampPanelWidth(ev.clientX))
+      setPanelWidth(clampPanelWidth(window.innerWidth - ev.clientX))
     }
     let done = false
     const cleanup = () => {
@@ -1384,7 +1386,7 @@ export function AiPanel({
   if (!open) {
     return (
       <button className="ai-rail" title={t('appAiRailExpand')} onClick={onExpand}>
-        <GensparkMark size={22} />
+        <ByeolMark size={22} />
       </button>
     )
   }
@@ -1411,11 +1413,11 @@ export function AiPanel({
         onPointerDown={startResize}
         role="separator"
         aria-orientation="vertical"
-        aria-label="Genspark AI"
+        aria-label="Byeol AI"
       />
       <div className="ai-panel-header">
         <span className="ai-panel-title">
-          <GensparkMark size={22} />
+          <ByeolMark size={22} />
           {t('aiPanelTitle')}
         </span>
         <div className="ai-panel-header-actions">
@@ -1424,9 +1426,14 @@ export function AiPanel({
               <IconNewChat size={15} />
             </button>
           )}
+          {onOpenSettings && (
+            <button className="ai-header-btn" onClick={onOpenSettings} title="AI settings">
+              <IconSettings size={15} />
+            </button>
+          )}
           {onCollapse && (
             <button className="ai-header-btn" onClick={onCollapse} title={t('aiCollapsePanel')}>
-              <IconSidebarCollapseLeft size={15} />
+              <IconSidebarCollapse size={15} />
             </button>
           )}
         </div>

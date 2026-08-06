@@ -39,13 +39,14 @@ import {
   safeExternalUrl,
   viewMenuTemplate,
   windowMenuTemplate,
-} from '@genoffice/electron-utils'
-import { createI18n, getUiLang, type Lang, normalizeLang, setUiLang } from '@genoffice/i18n'
-import { ProjectStore } from '@genoffice/project-store'
+} from '@byeol/electron-utils'
+import { createI18n, getUiLang, type Lang, normalizeLang, setUiLang } from '@byeol/i18n'
+import { ProjectStore } from '@byeol/project-store'
 
 import {
   AiCreditsError,
   AiTimeoutError,
+  applyAiEnvironmentOverrides,
   chatForProvider,
   defaultAiSettings,
   resolveAiSettings,
@@ -55,7 +56,7 @@ import {
   type AiStreamChunk,
   type GenSparkAccountStatus,
   type LegacyAiSettings,
-} from '@genoffice/ai-provider'
+} from '@byeol/ai-provider'
 import { csvToXlsxBuffer, decodeCsvBuffer } from '../gateway/csv-import'
 import {
   gskApiKey,
@@ -64,8 +65,8 @@ import {
   hasGskAuth,
   webSearch,
   imageSearch,
-} from '@genoffice/ai-search'
-import { parseFileToText } from '@genoffice/file-parse'
+} from '@byeol/ai-search'
+import { parseFileToText } from '@byeol/file-parse'
 import type { CellEdit, SheetStructuralOps } from '../gateway/xlsx-gateway'
 import { readArchiveEntryText, saveWorkbookViaSidecar } from '../gateway/xlsx-package-io'
 import { parsePivotDefinition } from '../gateway/xlsx-pivot'
@@ -1205,6 +1206,7 @@ function writeJson(path: string, value: unknown): void {
 }
 
 const SETTINGS_PATH = () => userDataPath('ai-settings.json')
+let aiSettingsChangedThisSession = false
 
 // Dev-only automation hooks: a fixed CDP port for driving the app from test
 // scripts, and a workbook path that bypasses the native file dialog.
@@ -1304,7 +1306,7 @@ export async function createSheetsWindow(
     minWidth: 1024,
     minHeight: 680,
     show: false,
-    title: 'GenOffice Sheets',
+    title: 'Byeol Sheets',
     // Traffic lights sit inside the toolbar row.
     ...(process.platform === 'darwin' ? { titleBarStyle: 'hiddenInset' as const } : {}),
     webPreferences: {
@@ -1420,7 +1422,7 @@ const ATTACHMENT_TEXT_EXTS = new Set([
   'sql',
   'css',
 ])
-/** office/pdf formats extract text via @genoffice/file-parse; images skip text
+/** office/pdf formats extract text via @byeol/file-parse; images skip text
  * extraction and go multimodal (sheets:files-read-image) */
 const ATTACHMENT_EXTS = new Set([
   ...ATTACHMENT_TEXT_EXTS,
@@ -1491,7 +1493,7 @@ function savePastedImage(data: unknown, ext: unknown): string | null {
         ? Buffer.from(data.buffer, data.byteOffset, data.byteLength)
         : null
   if (!bytes || bytes.byteLength === 0) return null
-  const dir = join(app.getPath('temp'), 'genoffice-pasted')
+  const dir = join(app.getPath('temp'), 'byeol-suite-pasted')
   mkdirSync(dir, { recursive: true })
   const stamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '-')
   const filePath = join(dir, `pasted-${stamp}-${++pastedImageSeq}.${cleanExt}`)
@@ -1499,7 +1501,7 @@ function savePastedImage(data: unknown, ext: unknown): string | null {
   return filePath
 }
 
-/** Attachment text extraction via @genoffice/file-parse (docx/pdf/pptx/xlsx/plain text) */
+/** Attachment text extraction via @byeol/file-parse (docx/pdf/pptx/xlsx/plain text) */
 async function extractAttachmentText(filePath: string): Promise<string> {
   const stat = statSync(filePath)
   const stamp = `${stat.mtimeMs}:${stat.size}`
@@ -2016,15 +2018,13 @@ export function registerSheetsAiIpc(): void {
   ipcMain.handle(IPC_CHANNELS.aiGetSettings, (event): AiSettings => {
     sessionFor(event)
     const stored = readJson<Partial<AiSettings> & LegacyAiSettings>(SETTINGS_PATH(), {})
-    const settings = resolveAiSettings(stored, defaultAiSettings())
-    // AI features all go through Genspark (gsk login); legacy settings that chose
-    // another provider are reset
-    settings.provider = 'genspark'
-    return settings
+    const resolved = resolveAiSettings(stored, defaultAiSettings())
+    return aiSettingsChangedThisSession
+      ? resolved
+      : applyAiEnvironmentOverrides(resolved, process.env)
   })
 
-  // Genspark account (gsk login state): the auth source for AI features; the
-  // frontend uses it to guide sign-in when logged out
+  // Genspark account state: used only when the Genspark provider is selected.
   ipcMain.handle(
     IPC_CHANNELS.aiGskStatus,
     async (_event, withEmail?: unknown): Promise<GenSparkAccountStatus> => {
@@ -2043,6 +2043,7 @@ export function registerSheetsAiIpc(): void {
     sessionFor(event)
     const settings = aiSettingsInputSchema.parse(input)
     writeJson(SETTINGS_PATH(), settings)
+    aiSettingsChangedThisSession = true
   })
 
   ipcMain.handle(IPC_CHANNELS.aiChat, async (event, input: unknown) => {
@@ -2586,7 +2587,7 @@ async function prepareWorkbookForOpen(
     return { openPath: path }
   }
   const stem = basename(path).replace(/\.[^.]+$/, '')
-  const directory = join(app.getPath('temp'), 'genoffice-imports', randomUUID())
+  const directory = join(app.getPath('temp'), 'byeol-suite-imports', randomUUID())
   await mkdir(directory, { recursive: true })
   const openPath = join(directory, `${stem}.xlsx`)
   if (extension === 'csv') {
@@ -2750,16 +2751,19 @@ async function applyMainProcessProxy(): Promise<void> {
 export function startSheetsStandalone(): void {
   installNavigationGuard(app)
   installContextMenu(app, () => contextMenuLabels(getUiLang()))
-  // GENOFFICE_USER_DATA: test drivers point this at a scratch dir so automated
+  // BYEOL_USER_DATA: test drivers point this at a scratch dir so automated
   // instances get their own userData AND single-instance lock (the lock is scoped
   // to userData), allowing parallel instances alongside a normal dev run.
   // Same dev-only hook as apps/slides/src/main/slides-main.ts.
-  if (!app.isPackaged && process.env.GENOFFICE_USER_DATA) {
-    app.setPath('userData', process.env.GENOFFICE_USER_DATA)
+  const userDataOverride = process.env.BYEOL_USER_DATA ?? process.env.GENOFFICE_USER_DATA
+  if (!app.isPackaged && userDataOverride) {
+    app.setPath('userData', userDataOverride)
   }
   void applyMainProcessProxy()
   app.whenReady().then(() => {
-    setUiLang(normalizeLang(process.env.GENOFFICE_LANG ?? app.getLocale()))
+    setUiLang(
+      normalizeLang(process.env.BYEOL_LANG ?? process.env.GENOFFICE_LANG ?? app.getLocale()),
+    )
     app.setAccessibilitySupportEnabled(true)
     installApplicationMenu()
     startCaptureServer()

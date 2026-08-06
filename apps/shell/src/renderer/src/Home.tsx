@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import logoLockup from './assets/genoffice-logo.svg'
+import { AI_PROVIDERS, type AiSettings } from '@byeol/ai-provider'
+import { AiSettingsDialog } from '@byeol/ui'
+import logoLockup from './assets/byeol-suite-logo.svg'
 import iconDocx from './assets/file-docx.svg'
 import iconXlsx from './assets/file-xlsx.svg'
 import iconPptx from './assets/file-pptx.svg'
@@ -385,9 +387,8 @@ function ProjectPanel({ projects, selectedId, onSelect, onRefresh }: ProjectPane
   )
 }
 
-// ── Account entry (bottom-left) ──────────────────────────
-// Currently the Genspark (gsk) login entry; to be upgraded to a signup/account system later.
-// Language switching also lives in this popup menu.
+// ── Preferences entry (bottom-left) ─────────────────────
+// Language is the primary control. Genspark sign-in remains an optional provider action in the popup.
 
 const LOGIN_POLL_MS = 2500
 /** fallback deadline when the CLI does not report expires_in (device codes live ~300s) */
@@ -423,7 +424,7 @@ function AccountEntry() {
   const [waiting, setWaiting] = useState(false)
   // incremented on login retry, resetting the polling timer
   const [loginNonce, setLoginNonce] = useState(0)
-  const [loginError, setLoginError] = useState<
+  const [, setLoginError] = useState<
     'timeout' | 'launch' | 'network' | 'expired' | 'failed' | null
   >(null)
   // auth URL reported by the login CLI — rescue entry when the browser did not open
@@ -440,6 +441,7 @@ function AccountEntry() {
   const langCloseTimer = useRef<number | null>(null)
   const [loggingOut, setLoggingOut] = useState(false)
   const [appVersion, setAppVersion] = useState('')
+  const [aiSettings, setAiSettings] = useState<AiSettings | null>(null)
 
   // query login state + app version once on mount
   useEffect(() => {
@@ -515,17 +517,8 @@ function AccountEntry() {
 
   const loggedIn = status?.loggedIn ?? false
   const email = status?.email ?? ''
-  const initial = email ? email[0].toUpperCase() : loggedIn ? 'G' : '?'
-  const errorText = loginError
-    ? {
-        timeout: t('loginTimeout'),
-        launch: t('loginLaunchFailed'),
-        network: t('loginNetworkError'),
-        expired: t('loginExpired'),
-        failed: t('loginFailed'),
-      }[loginError]
-    : null
-
+  const settingsLabel = lang === 'ko' ? '설정' : 'Settings'
+  const settingsSub = lang === 'ko' ? 'AI · 언어' : `AI · ${t('language')}`
   const closeMenu = () => {
     setMenuOpen(false)
     setLangFly(null)
@@ -599,10 +592,19 @@ function AccountEntry() {
     setLangFly(null)
   }
 
+  const openAiSettings = () => {
+    closeMenu()
+    void window.aiOffice.getAiSettings().then(setAiSettings)
+  }
+
   return (
     <div className="account-entry">
       {menuOpen && (
         <div className="account-menu" role="menu">
+          <button className="account-menu-item" role="menuitem" onClick={openAiSettings}>
+            {lang === 'ko' ? 'AI 프로바이더 설정' : 'AI provider settings'}
+          </button>
+          <div className="account-menu-divider" />
           {loggedIn ? (
             <div className="account-menu-info">
               <span className="account-menu-email" title={email}>
@@ -777,18 +779,10 @@ function AccountEntry() {
         className="account-btn"
         onClick={handleClick}
         aria-expanded={menuOpen}
-        title={
-          loggedIn
-            ? email || t('loggedInGenspark')
-            : waiting
-              ? t('waitingLogin')
-              : (errorText ?? t('loginGenspark'))
-        }
-        aria-label={loggedIn ? t('account') : t('login')}
+        title={settingsLabel}
+        aria-label={settingsLabel}
       >
-        <span
-          className={`account-avatar${loggedIn ? ' logged-in' : ''}${waiting ? ' waiting' : ''}`}
-        >
+        <span className={`account-avatar${waiting ? ' waiting' : ''}`}>
           {waiting ? (
             <svg
               className="account-spinner"
@@ -810,27 +804,26 @@ function AccountEntry() {
               />
             </svg>
           ) : (
-            initial
+            '⚙'
           )}
         </span>
         <span className="account-text">
-          {loggedIn ? (
-            <>
-              <span className="account-name">{email ? email.split('@')[0] : t('loggedIn')}</span>
-              <span className="account-sub" title={email}>
-                {email || 'Genspark'}
-              </span>
-            </>
-          ) : (
-            <>
-              <span className="account-name">{waiting ? t('waitingShort') : t('login')}</span>
-              <span className={`account-sub${!waiting && errorText ? ' error' : ''}`}>
-                {!waiting && errorText ? errorText : t('accountGenspark')}
-              </span>
-            </>
-          )}
+          <span className="account-name">{settingsLabel}</span>
+          <span className="account-sub">{settingsSub}</span>
         </span>
       </button>
+      {aiSettings && (
+        <AiSettingsDialog
+          settings={aiSettings}
+          providers={AI_PROVIDERS}
+          locale={lang}
+          onClose={() => setAiSettings(null)}
+          onSave={async (next) => {
+            await window.aiOffice.setAiSettings(next)
+            setAiSettings(null)
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -1710,7 +1703,7 @@ export function Home() {
     <div className="home">
       <aside className="sidebar">
         <div className="sidebar-logo">
-          <img className="logo-lockup" src={logoLockup} alt="GenOffice" />
+          <img className="logo-lockup" src={logoLockup} alt="Byeol Suite" />
         </div>
 
         <nav className="sidebar-nav">

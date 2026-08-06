@@ -1,13 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import { ByeolMark } from '@byeol/ui'
 
-import {
-  CaretIcon,
-  GensparkMark,
-  RIBBON_GLYPH_ICONS,
-  RedoIcon,
-  SaveIcon,
-  UndoIcon,
-} from './ribbon-icons'
+import { CaretIcon, RIBBON_GLYPH_ICONS, RedoIcon, SaveIcon, UndoIcon } from './ribbon-icons'
 
 import { FormatCellsDialog } from './FormatCellsDialog'
 import { GoToDialog } from './GoToDialog'
@@ -142,6 +136,7 @@ interface ExcelShellProps {
   readonly onStop: () => void
   readonly onNewChat: () => void
   readonly onUndo: () => void
+  readonly onOpenAiSettings: () => void
   readonly onCommand: (command: string) => void
   /// Left side of the status bar (ready / streaming / AI progress messages).
   readonly statusMessage: string
@@ -255,6 +250,7 @@ export function ExcelShell({
   onStop,
   onNewChat,
   onUndo,
+  onOpenAiSettings,
   onCommand,
   statusMessage,
   zoomPercent,
@@ -438,6 +434,7 @@ export function ExcelShell({
           onUndo={onUndo}
           onExpand={() => setIsCopilotOpen(true)}
           onCollapse={() => setIsCopilotOpen(false)}
+          onOpenSettings={onOpenAiSettings}
         />
         <div className="sheet-main">
           {/* Excel's formula-bar row, Name Box only for now (fx bar TBD). */}
@@ -2059,10 +2056,10 @@ function Ribbon({
           onClick={onAiToggle}
         >
           <span className="tool-icon-row">
-            <GensparkMark size={26} />
+            <ByeolMark size={26} />
           </span>
           <span>
-            <strong>Genspark AI</strong>
+            <strong>Byeol AI</strong>
           </span>
         </button>
         <button
@@ -2526,8 +2523,8 @@ function Ribbon({
         title={t('aiOpenAssistant')}
         onClick={() => onCommand('ai-toggle-panel')}
       >
-        <GensparkMark size={28} />
-        <span>Genspark</span>
+        <ByeolMark size={28} />
+        <span>Byeol AI</span>
       </button>
     </div>
   )

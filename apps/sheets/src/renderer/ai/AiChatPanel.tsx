@@ -1,10 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { AiComposer, AiTypingIndicator } from '@genoffice/ui'
-import { GensparkMark } from '../ribbon-icons'
+import { AiComposer, AiTypingIndicator, ByeolMark, IconSettings, Markdown } from '@byeol/ui'
 import type { ChangePlan } from '../../domain/workbook.types'
 import type { AttachmentMeta } from '../../shared/desktop-api'
 import { useI18n, type TFunc } from '../i18n/locale'
-import { Markdown } from '@genoffice/ui'
 import sendEnterOn from '../assets/send-enter-on.png'
 import sendEnterOff from '../assets/send-enter-off.png'
 import sendStop from '../assets/send-stop.png'
@@ -78,6 +76,7 @@ export function AiChatPanel({
   onUndo,
   onExpand,
   onCollapse,
+  onOpenSettings,
 }: {
   readonly isOpen: boolean
   /** the workbook has cells with content — empty workbooks get "build me a sheet" copy instead */
@@ -105,6 +104,7 @@ export function AiChatPanel({
   readonly onUndo: () => void
   readonly onExpand: () => void
   readonly onCollapse: () => void
+  readonly onOpenSettings: () => void
 }): React.JSX.Element {
   const { t } = useI18n()
   const chatRef = useRef<HTMLDivElement | null>(null)
@@ -151,7 +151,7 @@ export function AiChatPanel({
   const resizeCleanupRef = useRef<(() => void) | null>(null)
   useEffect(() => () => resizeCleanupRef.current?.(), [])
 
-  /** Drag the right edge to resize: the panel is flush with the window's left edge, so width = clientX; the grid transition is disabled while dragging */
+  /** Drag the left edge to resize the right-docked panel. */
   const startResize = (e: React.PointerEvent<HTMLDivElement>): void => {
     e.preventDefault()
     const area = asideRef.current?.closest('.sheet-body') as HTMLElement | null
@@ -163,7 +163,7 @@ export function AiChatPanel({
     document.body.style.userSelect = 'none'
     let width = 0
     const onMove = (ev: PointerEvent): void => {
-      width = clampPanelWidth(ev.clientX)
+      width = clampPanelWidth(window.innerWidth - ev.clientX)
       area.style.setProperty('--copilot-width', `${width}px`)
     }
     let done = false
@@ -200,7 +200,7 @@ export function AiChatPanel({
     return (
       <aside className="copilot collapsed">
         <button className="expand-copilot" onClick={onExpand} title={t('aiOpenAssistant')}>
-          <GensparkMark size={22} />
+          <ByeolMark size={22} />
         </button>
       </aside>
     )
@@ -261,12 +261,12 @@ export function AiChatPanel({
         onPointerDown={startResize}
         role="separator"
         aria-orientation="vertical"
-        aria-label="Genspark"
+        aria-label="Byeol AI"
       />
       <header className="ai-panel-header">
         <span className="ai-panel-title">
-          <GensparkMark size={22} />
-          Genspark
+          <ByeolMark size={22} />
+          Byeol AI
         </span>
         <div className="ai-panel-header-actions">
           {(chat.length > 0 || historicChat.length > 0) && (
@@ -274,6 +274,9 @@ export function AiChatPanel({
               <IconNewChat size={15} />
             </button>
           )}
+          <button className="ai-header-btn" onClick={onOpenSettings} title="AI settings">
+            <IconSettings size={15} />
+          </button>
           <button className="ai-header-btn" onClick={onCollapse} title={t('aiCollapsePanel')}>
             <IconCollapse size={15} />
           </button>
@@ -502,12 +505,11 @@ function IconNewChat({ size }: { size: number }): React.JSX.Element {
 }
 
 function IconCollapse({ size }: { size: number }): React.JSX.Element {
-  // Mirrored glyph: the AI panel docks on the LEFT, so the divider and arrow point left
   return (
     <Svg size={size}>
       <rect x="1.5" y="2.5" width="13" height="11" rx="1" />
-      <path d="M5.5 2.5v11" />
-      <path d="M12.5 8H8.1M9.8 5.9 7.7 8l2.1 2.1" strokeWidth="1.3" strokeLinejoin="round" />
+      <path d="M10.5 2.5v11" />
+      <path d="M3.5 8h4.4M6.2 5.9 8.3 8l-2.1 2.1" strokeWidth="1.3" strokeLinejoin="round" />
     </Svg>
   )
 }

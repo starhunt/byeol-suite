@@ -12,3 +12,11 @@ checkout.
 
 Bundled fonts and their licenses are documented in
 apps/docs/src/renderer/fonts/README.md.
+
+Byeol Suite modifications
+Copyright 2026 Byeol Suite Contributors
+
+This distribution contains modifications to GenOffice and is independently
+branded as Byeol Suite. It is not affiliated with or endorsed by Mainfunc,
+Inc. or Genspark. A summary of the modifications is provided in
+MODIFICATIONS.md.

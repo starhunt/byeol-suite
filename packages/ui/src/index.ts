@@ -1,4 +1,5 @@
 export { AiComposer } from './AiComposer'
+export { AiSettingsDialog } from './AiSettingsDialog'
 export { AiTypingIndicator } from './AiTypingIndicator'
-export { IconSend, IconStop, type IconProps } from './icons'
+export { ByeolMark, IconSend, IconSettings, IconStop, type IconProps } from './icons'
 export { Markdown } from './Markdown'

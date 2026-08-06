@@ -1,4 +1,4 @@
-import type { AgentMessage, AgentToolCall, AgentToolDef } from '@genoffice/agent-core'
+import type { AgentMessage, AgentToolCall, AgentToolDef } from '@byeol/agent-core'
 import { httpBodyDetail } from './http-error'
 import { GENSPARK_LLM_BASE_URLS, gensparkAttributionHeaders } from './providers'
 import type { AiProviderConfig, AiProviderId } from './types'
@@ -858,9 +858,18 @@ export async function streamForProvider(
     case 'gemini':
       return streamGemini(config, system, messages, tools, maxTokens, cb)
     case 'deepseek':
-    case 'openai':
       return streamOpenAiCompatible(
         OPENAI_COMPATIBLE_BASE_URLS[provider]!,
+        config,
+        system,
+        messages,
+        tools,
+        maxTokens,
+        cb,
+      )
+    case 'openai':
+      return streamOpenAiCompatible(
+        config.baseUrl || OPENAI_COMPATIBLE_BASE_URLS.openai!,
         config,
         system,
         messages,

@@ -20,9 +20,10 @@ import {
   type StyleUpsert,
   type ThemeColors,
   type ThemeFonts,
-} from '@genoffice/docx-engine'
+} from '@byeol/docx-engine'
 import type { AiSettings, OpenFileResult } from '../shared/ipc'
 import { AI_PROVIDERS } from '../shared/ipc'
+import { AiSettingsDialog } from '@byeol/ui'
 import { AiPanel } from './ai/AiPanel'
 import { asianCharCount, countWords, nonAsianWordCount } from './word-count'
 import { toRoman } from './note-format'
@@ -251,11 +252,15 @@ interface DocStats {
 }
 
 const DEFAULT_SETTINGS: AiSettings = {
-  provider: 'anthropic',
+  provider: 'openai',
   providers: Object.fromEntries(
     AI_PROVIDERS.map((p) => [
       p.id,
-      { apiKey: '', model: p.defaultModel, baseUrl: p.needsBaseUrl ? '' : undefined },
+      {
+        apiKey: '',
+        model: p.defaultModel,
+        baseUrl: p.needsBaseUrl ? (p.defaultBaseUrl ?? '') : undefined,
+      },
     ]),
   ) as AiSettings['providers'],
 }
@@ -269,6 +274,7 @@ export function App() {
   const bootHandledRef = useRef(false)
   const [_recent, setRecent] = useState<string[]>([])
   const [settings, setSettings] = useState<AiSettings>(DEFAULT_SETTINGS)
+  const [showAiSettings, setShowAiSettings] = useState(false)
   const [showAi, setShowAi] = useState(() => localStorage.getItem('aidocs.showAi') !== '0')
   /** Increments on every open/new document: AiPanel remounts by key to reset the conversation and history (save path changes don't bump it, so the session continues) */
   const [aiPanelKey, setAiPanelKey] = useState(0)
@@ -631,7 +637,7 @@ export function App() {
 
   // window title follows the document, so the OS window list and Switch Window show file names
   useEffect(() => {
-    document.title = doc ? doc.fileName : 'GenOffice Docs'
+    document.title = doc ? doc.fileName : 'Byeol Docs'
   }, [doc])
 
   useEffect(() => window.desktop.onTeardown?.(() => setTornDown(true)), [])
@@ -2507,6 +2513,7 @@ export function App() {
               open={showAi}
               onExpand={() => setShowAi(true)}
               onCollapse={() => setShowAi(false)}
+              onOpenSettings={() => setShowAiSettings(true)}
               filePath={doc?.filePath ?? null}
             />
           </div>
@@ -3037,6 +3044,19 @@ export function App() {
             </div>
           </div>
         </div>
+      )}
+      {showAiSettings && (
+        <AiSettingsDialog
+          settings={settings}
+          providers={AI_PROVIDERS}
+          locale={lang}
+          onClose={() => setShowAiSettings(false)}
+          onSave={async (next) => {
+            await window.desktop.setAiSettings(next)
+            setSettings(next)
+            setShowAiSettings(false)
+          }}
+        />
       )}
     </div>
   )

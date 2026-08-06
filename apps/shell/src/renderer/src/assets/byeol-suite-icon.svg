@@ -1,0 +1,12 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="byeol-icon-gradient" x1="120" y1="80" x2="900" y2="944" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#172554"/>
+      <stop offset="0.55" stop-color="#4338CA"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+  <rect x="32" y="32" width="960" height="960" rx="228" fill="url(#byeol-icon-gradient)"/>
+  <path d="M512 173C540.8 318.9 655.1 433.2 801 462C655.1 490.8 540.8 605.1 512 751C483.2 605.1 368.9 490.8 223 462C368.9 433.2 483.2 318.9 512 173Z" fill="white"/>
+  <circle cx="771" cy="716" r="66" fill="#67E8F9"/>
+</svg>

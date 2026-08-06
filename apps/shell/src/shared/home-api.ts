@@ -1,4 +1,6 @@
-/** UI language; kept self-contained here (mirrors Lang in @genoffice/i18n) */
+import type { AiSettings } from '@byeol/ai-provider'
+
+/** UI language; kept self-contained here (mirrors Lang in @byeol/i18n) */
 export type UiLanguage =
   | 'zh'
   | 'en'
@@ -87,6 +89,10 @@ export interface HomeApi {
   getLanguage(): Promise<UiLanguage>
   /** switch + persist the UI language; main rebuilds its menus to match */
   setLanguage(lang: UiLanguage): Promise<void>
+  /** shared provider/model settings used by every editor */
+  getAiSettings(): Promise<AiSettings>
+  /** persist shared provider/model settings */
+  setAiSettings(settings: AiSettings): Promise<void>
   /** Genspark account status (gsk login state; to be upgraded to a signup/account system later) */
   accountStatus(): Promise<AccountStatus>
   /** start Genspark login (opens the browser; accountStatus flips to logged-in on completion); returns whether the launch succeeded */
@@ -103,8 +109,8 @@ export interface HomeApi {
   onboardingSeen(): Promise<boolean>
   /** mark the first-run onboarding as done so it never shows again */
   setOnboardingSeen(): Promise<void>
-  /** open the GenTeam community page in the default browser */
-  openGenTeam(): Promise<void>
+  /** open this fork's project page in the default browser */
+  openProjectPage(): Promise<void>
 }
 
 export interface AccountStatus {
@@ -186,6 +192,8 @@ export const HOME_CHANNELS = {
   openTrash: 'home:open-trash',
   getLanguage: 'home:get-language',
   setLanguage: 'home:set-language',
+  aiGetSettings: 'ai:get-settings',
+  aiSetSettings: 'ai:set-settings',
   accountStatus: 'home:account-status',
   accountLogin: 'home:account-login',
   accountLoginEvent: 'home:account-login-event',
@@ -194,7 +202,7 @@ export const HOME_CHANNELS = {
   getAppVersion: 'home:get-app-version',
   onboardingSeen: 'home:onboarding-seen',
   setOnboardingSeen: 'home:set-onboarding-seen',
-  openGenTeam: 'home:open-genteam',
+  openProjectPage: 'home:open-project-page',
 } as const
 
 export const PROJECT_CHANNELS = {

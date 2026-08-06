@@ -344,18 +344,6 @@ button {
   box-shadow: 0 2px 6px rgba(74, 92, 255, 0.25);
 }
 
-/* Genspark brand logo (Ribbon AI button / AI panel title / collapsed entry) */
-.genspark-badge {
-  display: block;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-}
-
-.ai-panel-title .genspark-badge {
-  width: 18px;
-  height: 18px;
-}
 /* ---- ribbon body ---- */
 
 .ribbon-body {
@@ -448,7 +436,7 @@ button {
   color: #232425;
 }
 
-/* Home-tab Genspark AI entry: black circular "+" badge with a dropdown caret,
+/* Home-tab AI entry: black circular "+" badge with a dropdown caret,
    brand label below (mirrors the sheets Home ribbon). */
 /* AI feature buttons next to the entry: purple glyphs, label below */
 .ai-feature-icon {
@@ -494,7 +482,7 @@ button {
   background: var(--active-bg);
 }
 
-/* The Genspark AI entry keeps a black label even while the panel is open. */
+/* The AI entry keeps a black label even while the panel is open. */
 .rb-big.ai-entry.active {
   color: var(--text);
 }
@@ -1163,16 +1151,16 @@ body.vib .slide-list {
   display: flex;
   flex-direction: column;
   background: var(--surface);
-  border-right: 1px solid var(--border);
-  box-shadow: 4px 0 16px rgba(82, 41, 31, 0.05);
+  border-left: 1px solid var(--border);
+  box-shadow: -4px 0 16px rgba(82, 41, 31, 0.05);
   font-family: var(--gs-font-sans);
   color: var(--color-text-primary);
 }
 
-/* drag handle on the panel's right edge — resize the panel horizontally (no highlight, cursor-only affordance) */
+/* drag handle on the right-docked panel's left edge */
 .ai-panel-resizer {
   position: absolute;
-  right: 0;
+  left: 0;
   top: 0;
   bottom: 0;
   width: 6px;
@@ -3511,7 +3499,7 @@ body.vib .slide-list {
 }
 
 /* AI quick actions anchored right above the slide card (mirrors the Home-tab
-   Genspark AI group); absolute so it doesn't distort the zoom-box extent.
+   AI group); absolute so it doesn't distort the zoom-box extent.
    z-index lifts it over the Konva stage's transparent 160px bleed, which
    otherwise swallows the clicks */
 /* Genspark SAS floating toolbar, matched to the reference stage-toolbar:
@@ -6423,6 +6411,7 @@ body.vib .slide-list {
  * the panel's drag-resizer */
 .ai-dock {
   display: flex;
+  order: 20;
   flex-shrink: 0;
   min-height: 0;
   width: var(--ai-panel-width, 360px);

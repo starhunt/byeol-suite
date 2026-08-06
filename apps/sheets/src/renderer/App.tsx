@@ -98,8 +98,9 @@ import '@univerjs/preset-sheets-table/lib/index.css'
 import { greenTheme } from '@univerjs/themes'
 import { createUniver } from './create-univer'
 
-import { AgentLoop, composeSkills, type AgentImage } from '@genoffice/agent-core'
-import type { AiSettings } from '@genoffice/ai-provider'
+import { AgentLoop, composeSkills, type AgentImage } from '@byeol/agent-core'
+import { AI_PROVIDERS, type AiSettings } from '@byeol/ai-provider'
+import { AiSettingsDialog } from '@byeol/ui'
 import { type WorkbookOperation } from '../domain/workbook-dsl'
 import { columnIndex, columnLabel, parseAddress, parseRange } from '../domain/cell-address'
 import {
@@ -539,6 +540,7 @@ export function App(): React.JSX.Element {
   // ---- AI: real LLM agent (falls back to the deterministic planner above
   // when no provider is configured — see isAgentConfigured/handleSend) ----
   const [aiSettings, setAiSettingsState] = useState<AiSettings | null>(null)
+  const [showAiSettings, setShowAiSettings] = useState(false)
   const aiSettingsRef = useRef<AiSettings | null>(null)
   aiSettingsRef.current = aiSettings
   const [aiBusy, setAiBusy] = useState(false)
@@ -869,22 +871,23 @@ export function App(): React.JSX.Element {
             }
             return next
           })
-          // Signed-out failures get an inline sign-in button; detected via
-          // gsk status rather than matching the localized error text
-          void window.desktopApi
-            .aiGskStatus()
-            .then((status) => {
-              if (status.loggedIn) return
-              setChat((previous) => {
-                const next = [...previous]
-                const last = next.at(-1)
-                if (last?.role === 'assistant' && last.isError) {
-                  next[next.length - 1] = { ...last, loginRequired: true }
-                }
-                return next
+          // Only Genspark-provider failures may be caused by the shared gsk login state.
+          if (aiSettingsRef.current?.provider === 'genspark') {
+            void window.desktopApi
+              .aiGskStatus()
+              .then((status) => {
+                if (status.loggedIn) return
+                setChat((previous) => {
+                  const next = [...previous]
+                  const last = next.at(-1)
+                  if (last?.role === 'assistant' && last.isError) {
+                    next[next.length - 1] = { ...last, loginRequired: true }
+                  }
+                  return next
+                })
               })
-            })
-            .catch(() => {})
+              .catch(() => {})
+          }
           void autoSaveCompletedAiRun().finally(() => setAiBusy(false))
         },
       },
@@ -2973,6 +2976,7 @@ export function App(): React.JSX.Element {
         onStop={handleStopAgent}
         onNewChat={handleNewChat}
         onUndo={handleUndo}
+        onOpenAiSettings={() => setShowAiSettings(true)}
         onCommand={handleRibbonCommand}
         zoomPercent={zoomPercent}
         canSave={pendingEdits > 0}
@@ -3003,6 +3007,19 @@ export function App(): React.JSX.Element {
         onGetConsolidateDefault={() => consolidateDefaultReferenceImpl(dataToolsContext())}
         onApplyHeaderFooter={(result) => handleApplyHeaderFooterImpl(pageLayoutContext(), result)}
       />
+      {showAiSettings && aiSettings && (
+        <AiSettingsDialog
+          settings={aiSettings}
+          providers={AI_PROVIDERS}
+          locale={getLang()}
+          onClose={() => setShowAiSettings(false)}
+          onSave={async (next) => {
+            await window.desktopApi.setAiSettings(next)
+            setAiSettingsState(next)
+            setShowAiSettings(false)
+          }}
+        />
+      )}
       {advancedFilterColumns !== null && (
         <AdvancedFilterDialog
           columns={advancedFilterColumns}

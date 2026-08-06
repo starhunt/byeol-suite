@@ -9,12 +9,7 @@
  *
  * This module has no side effects; App.tsx calls it.
  */
-import type {
-  ShapeRenderNode,
-  PictureRenderNode,
-  RenderNode,
-  RenderFill,
-} from '@genoffice/pptx-render'
+import type { ShapeRenderNode, PictureRenderNode, RenderNode, RenderFill } from '@byeol/pptx-render'
 import type { EditParagraph, EditRun } from '../shared/ipc'
 
 /** Format container captured by the render layer (pure data, serializable) */

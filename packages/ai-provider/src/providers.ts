@@ -12,9 +12,10 @@ export const GENSPARK_LLM_BASE_URLS = {
 } as const
 
 /**
- * Splits GenOffice usage out of the proxy's default "Claw" billing bucket
- * (the backend attributes gsk-key traffic by X-Agent-Type). Only sent to the
- * Genspark proxy — never to direct vendor APIs.
+ * Upstream Genspark compatibility identifier. The service attributes gsk-key
+ * traffic by X-Agent-Type, so this protocol value must remain `genoffice`
+ * even though the fork's public product name is Byeol Suite. It is never sent
+ * to direct vendor APIs.
  */
 export const GENSPARK_AGENT_TYPE = 'genoffice'
 
@@ -26,19 +27,21 @@ export function gensparkAttributionHeaders(baseUrl?: string): Record<string, str
 
 export const AI_PROVIDERS: AiProviderMeta[] = [
   {
-    id: 'genspark',
-    label: 'Genspark',
+    id: 'openai',
+    label: 'OpenAI compatible',
     models: [
-      'claude-opus-4-7',
-      'claude-opus-4-8',
-      'claude-sonnet-4-6',
-      'claude-haiku-4-5',
+      'codex-tools',
+      'claude-tools',
       'gpt-5.2',
-      'gemini-3.1-pro-preview',
-      'gemini-3-flash-preview',
+      'gpt-4.1',
+      'gpt-4.1-mini',
+      'gpt-4o',
+      'gpt-4o-mini',
     ],
-    defaultModel: 'claude-opus-4-7',
-    keyPlaceholder: 'Not required - sign in to Genspark',
+    defaultModel: 'gpt-4.1-mini',
+    keyPlaceholder: 'sk-...',
+    needsBaseUrl: true,
+    defaultBaseUrl: 'https://api.openai.com/v1',
   },
   {
     id: 'anthropic',
@@ -71,19 +74,27 @@ export const AI_PROVIDERS: AiProviderMeta[] = [
     keyPlaceholder: 'sk-...',
   },
   {
-    id: 'openai',
-    label: 'OpenAI',
-    models: ['gpt-4.1', 'gpt-4.1-mini', 'gpt-4o', 'gpt-4o-mini'],
-    defaultModel: 'gpt-4.1-mini',
-    keyPlaceholder: 'sk-...',
-  },
-  {
     id: 'custom',
-    label: 'Custom',
+    label: 'Legacy custom',
     models: [],
     defaultModel: '',
     keyPlaceholder: 'API Key',
     needsBaseUrl: true,
+  },
+  {
+    id: 'genspark',
+    label: 'Genspark (optional)',
+    models: [
+      'claude-opus-4-7',
+      'claude-opus-4-8',
+      'claude-sonnet-4-6',
+      'claude-haiku-4-5',
+      'gpt-5.2',
+      'gemini-3.1-pro-preview',
+      'gemini-3-flash-preview',
+    ],
+    defaultModel: 'claude-opus-4-7',
+    keyPlaceholder: 'Not required - sign in to Genspark',
   },
 ]
 
@@ -101,10 +112,10 @@ export function defaultAiSettings(
     providers[meta.id] = {
       apiKey: defaultApiKeys?.[meta.id] ?? '',
       model: meta.defaultModel,
-      baseUrl: meta.needsBaseUrl ? '' : undefined,
+      baseUrl: meta.needsBaseUrl ? (meta.defaultBaseUrl ?? '') : undefined,
     }
   }
-  return { provider: 'genspark', providers }
+  return { provider: 'openai', providers }
 }
 
 /**
@@ -129,6 +140,46 @@ export function resolveAiSettings(
   }
   return {
     provider: stored.provider ?? defaults.provider,
-    providers: { ...defaults.providers, ...stored.providers },
+    providers: Object.fromEntries(
+      Object.entries(defaults.providers).map(([provider, config]) => [
+        provider,
+        { ...config, ...stored.providers?.[provider as AiProviderId] },
+      ]),
+    ) as AiSettings['providers'],
+  }
+}
+
+export interface AiEnvironmentOverrides {
+  BYEOL_AI_BASE_URL?: string
+  BYEOL_AI_API_KEY?: string
+  BYEOL_AI_MODEL?: string
+}
+
+/**
+ * Select an OpenAI-compatible endpoint for a local run without modifying the
+ * persisted settings file. This is primarily useful for shared gateways such
+ * as StarProxy: the normal OpenAI provider remains the transport, while a
+ * `*-tools` model alias opts a request into the gateway's tool-call bridge.
+ */
+export function applyAiEnvironmentOverrides(
+  settings: AiSettings,
+  environment: AiEnvironmentOverrides,
+): AiSettings {
+  const baseUrl = environment.BYEOL_AI_BASE_URL?.trim()
+  const apiKey = environment.BYEOL_AI_API_KEY?.trim()
+  const model = environment.BYEOL_AI_MODEL?.trim()
+  if (!baseUrl && !apiKey && !model) return settings
+
+  return {
+    provider: 'openai',
+    providers: {
+      ...settings.providers,
+      openai: {
+        ...settings.providers.openai,
+        ...(baseUrl ? { baseUrl } : {}),
+        ...(apiKey ? { apiKey } : {}),
+        ...(model ? { model } : {}),
+      },
+    },
   }
 }

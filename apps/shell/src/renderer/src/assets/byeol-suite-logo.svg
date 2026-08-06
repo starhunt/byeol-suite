@@ -1,0 +1,14 @@
+<svg width="720" height="160" viewBox="0 0 720 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="byeol-logo-gradient" x1="18" y1="12" x2="148" y2="152" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#172554"/>
+      <stop offset="0.55" stop-color="#4338CA"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+  <rect width="160" height="160" rx="38" fill="url(#byeol-logo-gradient)"/>
+  <path d="M80 27C84.9 51.7 104.3 71.1 129 76C104.3 80.9 84.9 100.3 80 125C75.1 100.3 55.7 80.9 31 76C55.7 71.1 75.1 51.7 80 27Z" fill="white"/>
+  <circle cx="124" cy="119" r="11" fill="#67E8F9"/>
+  <text x="194" y="101" fill="#111827" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="72" font-weight="760" letter-spacing="-2">Byeol</text>
+  <text x="392" y="101" fill="#6366F1" font-family="Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="72" font-weight="520" letter-spacing="-2">Suite</text>
+</svg>
